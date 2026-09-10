@@ -968,8 +968,23 @@ namespace Cpu {
 				load_avg += fmt::format(" {:.2f}", val);
 			}
 
-			int len = load_avg_pre.size() + load_avg.size();
-			out += Mv::to(b_y + cy, b_x + 1) + string(max(b_width - len - 2, 0), ' ') + Theme::c("main_fg") + Fx::b + load_avg_pre + Fx::ub + load_avg;
+			string fan_out;
+			int fan_len = 0;
+			if (Config::getB("show_fan_speed") and not cpu.fan_speeds.empty()) {
+				string rpms;
+				for (size_t i = 0; i < cpu.fan_speeds.size(); i++) {
+					if (i > 0) rpms += '/';
+					fmt::format_to(std::back_inserter(rpms), "{}", cpu.fan_speeds[i]);
+				}
+				string label = cpu.fan_speeds.size() > 1 ? "Fans:" : "Fan:";
+				string val = fmt::format("{} RPM", rpms);
+				fan_len = label.size() + 1 + val.size();
+				fan_out = Theme::c("main_fg") + Fx::b + label + Fx::ub + ' ' + val;
+			}
+
+			int load_len = load_avg_pre.size() + load_avg.size();
+			int spaces = max(0, b_width - 2 - fan_len - load_len);
+			out += Mv::to(b_y + cy, b_x + 1) + fan_out + string(spaces, ' ') + Theme::c("main_fg") + Fx::b + load_avg_pre + Fx::ub + load_avg;
 		}
 
 	#ifdef GPU_SUPPORT

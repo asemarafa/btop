@@ -573,6 +573,10 @@ namespace Menu {
 				"`make setuid` or running with sudo.",
 				"",
 				"True or False."},
+			{"show_fan_speed",
+				"Shows the fan speed in RPM if supported.",
+				"",
+				"True or False."},
 		},
 	#ifdef GPU_SUPPORT
 		{

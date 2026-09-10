@@ -231,6 +231,7 @@ namespace Cpu {
 		};
 		vector<deque<long long>> core_percent;
 		vector<deque<long long>> temp;
+		vector<long long> fan_speeds;
 		long long temp_max = 0;
 		array<double, 3> load_avg;
 		float usage_watts = 0;
