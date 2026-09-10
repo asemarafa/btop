@@ -777,7 +777,7 @@ namespace Cpu {
 	bool get_sensors() {
 		Logger::debug("get_sensors(): show_coretemp={} check_temp={}", Config::getB("show_coretemp"), Config::getB("check_temp"));
 		got_sensors = false;
-		if (Config::getB("show_coretemp") and Config::getB("check_temp")) {
+		if ((Config::getB("show_coretemp") and Config::getB("check_temp")) or Config::getB("show_fan_speed")) {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED > 101504
 			ThermalSensors sensors;
 			std::vector<long long> core_temps;
@@ -817,6 +817,14 @@ namespace Cpu {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED > 101504
 			}
 #endif
+			if (not got_sensors and Config::getB("show_fan_speed")) {
+				try {
+					SMCConnection smcCon;
+					if (smcCon.getFanCount() > 0) {
+						got_sensors = true;
+					}
+				} catch (...) {}
+			}
 		}
 		return got_sensors;
 	}
@@ -824,6 +832,7 @@ namespace Cpu {
 	struct SensorResult {
 		long long package_temp{};
 		std::vector<long long> core_temps;
+		std::vector<long long> fan_rpms;
 		bool valid{false};
 	};
 
@@ -848,6 +857,19 @@ namespace Cpu {
 		} catch (std::runtime_error &e) {
 			Logger::error("failed getting CPU temp: {}", e.what());
 		}
+
+		if (Config::getB("show_fan_speed")) {
+			try {
+				SMCConnection smcCon;
+				result.fan_rpms = smcCon.getFanRpms();
+				if (not result.fan_rpms.empty()) {
+					result.valid = true;
+				}
+			} catch (const std::exception &e) {
+				Logger::debug("failed getting fan speeds: {}", e.what());
+			}
+		}
+
 		return result;
 	}
 
@@ -866,6 +888,7 @@ namespace Cpu {
 		}
 
 		if (last_result.valid) {
+			current_cpu.fan_speeds = last_result.fan_rpms;
 			current_cpu.temp.at(0).push_back(last_result.package_temp);
 			if (current_cpu.temp.at(0).size() > 20)
 				current_cpu.temp.at(0).pop_front();
@@ -1106,7 +1129,7 @@ namespace Cpu {
 			}
 		}
 
-		if (Config::getB("check_temp") and got_sensors)
+		if ((Config::getB("check_temp") or Config::getB("show_fan_speed")) and got_sensors)
 			update_sensors();
 
 		if (Config::getB("show_battery") and has_battery)

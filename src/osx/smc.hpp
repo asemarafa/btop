@@ -25,6 +25,7 @@ tab-size = 4
 #include <IOKit/ps/IOPowerSources.h>
 
 #include <stdexcept>
+#include <vector>
 
 #define VERSION "0.01"
 
@@ -37,6 +38,7 @@ tab-size = 4
 #define SMC_CMD_READ_PLIMIT 11
 #define SMC_CMD_READ_VERS 12
 
+#define DATATYPE_FLT "flt "
 #define DATATYPE_FPE2 "fpe2"
 #define DATATYPE_UINT8 "ui8 "
 #define DATATYPE_UINT16 "ui16"
@@ -103,6 +105,8 @@ namespace Cpu {
 		virtual ~SMCConnection();
 
 		long long getTemp(int core);
+		int getFanCount();
+		std::vector<long long> getFanRpms();
 
 	   private:
 		kern_return_t SMCReadKey(UInt32Char_t key, SMCVal_t *val);

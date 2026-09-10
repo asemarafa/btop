@@ -17,6 +17,7 @@ tab-size = 4
 */
 
 #include "smc.hpp"
+#include <cmath>
 
 static constexpr size_t MaxIndexCount = sizeof("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ") - 1;
 static constexpr const char *KeyIndexes = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -67,6 +68,35 @@ namespace Cpu {
 	}
 	SMCConnection::~SMCConnection() {
 		IOServiceClose(conn);
+	}
+
+	//? Get number of fans reported by Apple SMC
+	int SMCConnection::getFanCount() {
+		UInt32Char_t key = "FNum";
+		SMCVal_t val;
+		if (SMCReadKey(key, &val) == kIOReturnSuccess and val.dataSize >= 1 and strcmp(val.dataType, DATATYPE_UINT8) == 0) {
+			return static_cast<int>(static_cast<uint8_t>(val.bytes[0]));
+		}
+		return 0;
+	}
+
+	//? Get fan speeds in RPM
+	std::vector<long long> SMCConnection::getFanRpms() {
+		std::vector<long long> rpms;
+		int count = getFanCount();
+		for (int i = 0; i < count and i < 16; i++) {
+			UInt32Char_t key;
+			snprintf(key, 5, "F%dAc", i);
+			SMCVal_t val;
+			if (SMCReadKey(key, &val) == kIOReturnSuccess and val.dataSize >= 4 and strcmp(val.dataType, DATATYPE_FLT) == 0) {
+				float rpm = 0.0f;
+				memcpy(&rpm, val.bytes, 4);
+				if (rpm >= 0.0f) {
+					rpms.push_back(static_cast<long long>(std::round(rpm)));
+				}
+			}
+		}
+		return rpms;
 	}
 
 	long long SMCConnection::getSMCTemp(char *key) {

@@ -1453,6 +1453,9 @@ show_uptime = true
 #* Shows the CPU package current power consumption in watts. Requires running `make setcap` or `make setuid` or running with sudo.
 show_cpu_watts = true
 
+#* Shows the fan speed in RPM if supported.
+show_fan_speed = true
+
 #* Show cpu temperature.
 check_temp = true
 
